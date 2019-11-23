@@ -26,7 +26,7 @@ app:
 
     secondary:
       data-source-props:
-        name: primary
+        name: secondary
         url: jdbc:mysql://******:3306/***
         username: !********
         password: !********
