@@ -1,27 +1,74 @@
 package org.finn.demo.configuration;
 
-import org.apache.commons.dbcp2.BasicDataSource;
+import com.zaxxer.hikari.HikariDataSource;
+import org.finn.demo.base.HibernateDataSourceConfigurationAdapter;
+import org.finn.demo.base.IntegrationDataSourceProperties;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.autoconfigure.orm.jpa.EntityManagerFactoryBuilderCustomizer;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.persistenceunit.PersistenceUnitManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
 
 /**
  * @author Finn Zhao
  */
 @Configuration
-public class SecondaryDataSourceConfiguration implements SecondaryBeanName {
+@EnableTransactionManagement
+@EnableJpaRepositories(entityManagerFactoryRef = SecondaryDataSourceConfiguration.ENTITY_MANAGER_FACTORY
+        , transactionManagerRef = SecondaryDataSourceConfiguration.TRANSACTION_MANAGER
+        , basePackages = {"org.finn.demo.repository.secondary"})
+//@EntityScan({"org.finn.demo.domain.secondary"})
+public class SecondaryDataSourceConfiguration extends HibernateDataSourceConfigurationAdapter {
 
-    /**
-     * Spring is trying to close BasicDataSource twice:<br/>
-     * 1. BasicDataSource close itself automatically when application close<br/>
-     * 2. Spring use default destroy method to close DataSource but it's already closed<br/>
-     *
-     * @return
-     */
-    @Bean(name = DATA_SOURCE, destroyMethod = "")
-    @ConfigurationProperties("app.datasource.secondary")
-    public BasicDataSource dataSource() {
-        return DataSourceBuilder.create().type(BasicDataSource.class).build();
+    public SecondaryDataSourceConfiguration(
+            ObjectProvider<PersistenceUnitManager> persistenceUnitManagerProvider
+            , ObjectProvider<EntityManagerFactoryBuilderCustomizer> customizers) {
+        super(persistenceUnitManagerProvider, customizers);
+    }
+
+    public static final String DATA_SOURCE = "dataSourceSecondary";
+
+    public static final String ENTITY_MANAGER_FACTORY = "entityManagerFactorySecondary";
+
+    public static final String TRANSACTION_MANAGER = "transactionManagerSecondary";
+
+    @Override
+    protected String[] baseEntityPackages() {
+        return new String[]{"org.finn.demo.domain.secondary"};
+    }
+
+    @Bean("integrationPropertiesSecondary")
+    @ConfigurationProperties("app.sql-database.secondary")
+    public IntegrationDataSourceProperties integrationProperties() {
+        return new IntegrationDataSourceProperties();
+    }
+
+    @Bean(DATA_SOURCE)
+    @ConfigurationProperties("app.sql-database.secondary.data-source")
+    public DataSource dataSource() {
+        DataSourceProperties properties = this.dataSourceProperties();
+        return properties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
+    }
+
+    @Bean(ENTITY_MANAGER_FACTORY)
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+        return this.buildEntityManagerFactoryBean();
+    }
+
+    @Bean(TRANSACTION_MANAGER)
+    public PlatformTransactionManager transactionManager() {
+        EntityManagerFactory factory = this.entityManagerFactory().getObject();
+        return this.buildTransactionManager(factory);
     }
 }

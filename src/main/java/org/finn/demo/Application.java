@@ -1,6 +1,5 @@
 package org.finn.demo;
 
-import org.finn.demo.configuration.BusinessProperties;
 import org.finn.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -13,9 +12,6 @@ public class Application implements CommandLineRunner {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private BusinessProperties businessProperties;
-
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
@@ -23,6 +19,7 @@ public class Application implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         //this.userService.saveRole("test_role");
+        this.userService.obtainRole(1l);
         this.userService.getRole(1l);
         //this.userService.saveUser("Finn", "email@unknown.com");
     }

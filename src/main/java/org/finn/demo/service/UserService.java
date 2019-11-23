@@ -1,5 +1,6 @@
 package org.finn.demo.service;
 
+import org.finn.demo.domain.primary.Role;
 import org.finn.demo.domain.secondary.RoleReadonly;
 
 /**
@@ -11,6 +12,8 @@ public interface UserService {
     void saveUser(String name, String email);
 
     void saveRole(String name);
+
+    Role obtainRole(Long id);
 
     RoleReadonly getRole(Long id);
 }

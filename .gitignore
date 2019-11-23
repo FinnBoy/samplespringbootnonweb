@@ -89,3 +89,4 @@ gen### Java template
 hs_err_pid*
 
 .idea/
+logs/

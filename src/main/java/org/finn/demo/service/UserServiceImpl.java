@@ -1,7 +1,7 @@
 package org.finn.demo.service;
 
-import org.finn.demo.configuration.PrimaryBeanName;
-import org.finn.demo.configuration.SecondaryBeanName;
+import org.finn.demo.configuration.PrimaryDataSourceConfiguration;
+import org.finn.demo.configuration.SecondaryDataSourceConfiguration;
 import org.finn.demo.domain.primary.Role;
 import org.finn.demo.domain.primary.User;
 import org.finn.demo.domain.secondary.RoleReadonly;
@@ -30,7 +30,7 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RoleReadonlyRepository roleReadonlyRepository;
 
-    @Transactional(value = PrimaryBeanName.TRANSACTION_MANAGER)
+    @Transactional(value = PrimaryDataSourceConfiguration.TRANSACTION_MANAGER)
     public void saveUser(String name, String email) {
         User user = new User();
         user.setName(name);
@@ -38,14 +38,20 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    @Transactional(value = PrimaryBeanName.TRANSACTION_MANAGER)
+    @Transactional(value = PrimaryDataSourceConfiguration.TRANSACTION_MANAGER)
     public void saveRole(String name) {
         Role role = new Role();
         role.setName(name);
         roleRepository.save(role);
     }
 
-    @Transactional(value = SecondaryBeanName.TRANSACTION_MANAGER, readOnly = true)
+    @Transactional(value = PrimaryDataSourceConfiguration.TRANSACTION_MANAGER)
+    public Role obtainRole(Long id) {
+        Optional<Role> optionalRole = roleRepository.findById(id);
+        return optionalRole.get();
+    }
+
+    @Transactional(value = SecondaryDataSourceConfiguration.TRANSACTION_MANAGER, readOnly = true)
     public RoleReadonly getRole(Long id) {
         Optional<RoleReadonly> optionalRole = roleReadonlyRepository.findById(id);
         return optionalRole.get();
